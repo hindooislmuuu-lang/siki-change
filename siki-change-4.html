@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>محول السوق الموازي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Space+Mono:wght@400;700&family=Italiana&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #10201d;
+    --card: #1c3833;
+    --gold: #d4af5a;
+    --gold-soft: #8f7a4a;
+    --paper: #f2ead9;
+    --ink: #eae3d3;
+    --ink-dim: #a9b8b2;
+    --line: #2e4d46;
+    --bg-2: #16302b;
+  }
+  *{box-sizing:border-box; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+  html,body{ height:100%; height:100dvh; margin:0; overscroll-behavior:none; }
+  body{
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(212,175,90,0.10), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Tajawal', sans-serif;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    touch-action:none;
+  }
+
+  .app-content{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    padding:1.2vh 4vw;
+    overflow:hidden;
+  }
+  .sheet{ width:100%; max-width:560px; }
+
+  .masthead{ text-align:center; margin-bottom:1.2vh; }
+  .brand{
+    font-family:'Italiana', serif;
+    font-size:clamp(20px, 6.5vw, 30px);
+    letter-spacing:3px;
+    color:var(--gold);
+    direction:ltr;
+    margin:0 0 4px;
+  }
+  .brand-rule{
+    width:18vw; max-width:90px; height:1px;
+    background:linear-gradient(to right, transparent, var(--gold-soft), transparent);
+    margin:0 auto 6px;
+  }
+  .masthead .kicker{
+    font-family:'Space Mono', monospace;
+    font-size:clamp(8.5px, 2.2vw, 10.5px); letter-spacing:1.2px; color:var(--gold-soft); direction:ltr;
+  }
+  .masthead h1{ margin:3px 0 0; font-size:clamp(13px, 3.6vw, 16.5px); font-weight:900; color:var(--paper); }
+
+  .rate-panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:1.2vh 3vw;
+    margin-bottom:1.3vh;
+  }
+  .rate-panel .rp-title{
+    font-size:clamp(9px, 2.3vw, 10.5px); color:var(--gold-soft); margin-bottom:0.8vh; text-align:center;
+  }
+  .rp-grid{
+    display:flex;
+    align-items:stretch;
+    gap:1.6vw;
+  }
+  .rp-row{
+    flex:1 1 0;
+    display:flex; flex-direction:column; align-items:center;
+    gap:0.5vh;
+    color:var(--ink-dim);
+    padding:0.7vh 0.5vw;
+    border-radius:9px;
+    transition:background .15s;
+  }
+  .rp-row.active{ background:rgba(212,175,90,0.12); }
+  .rp-row .rp-head{ display:flex; align-items:center; gap:1vw; }
+  .rp-row .flag{ font-size:clamp(12px, 3.4vw, 15px); }
+  .rp-row .code{
+    font-family:'Space Mono', monospace;
+    font-size:clamp(7.5px, 2vw, 9px); color:var(--gold-soft); letter-spacing:0.4px;
+  }
+  .rp-row .rp-val{ display:flex; align-items:baseline; gap:0.8vw; }
+  .rp-row input{
+    pointer-events:none;
+    width:13vw;
+    max-width:56px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--ink);
+    font-family:'Space Mono', monospace;
+    font-size:clamp(10px, 2.9vw, 12.5px);
+    padding:0.8vh 0.4vw;
+    direction:ltr; text-align:center;
+  }
+  .rp-row .dzd{ font-size:clamp(7.5px, 2vw, 9px); white-space:nowrap; pointer-events:none; }
+
+  .grid{
+    display:flex;
+    flex-direction:column;
+    gap:1.2vh;
+  }
+  .mini-row{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:2.2vw;
+  }
+  .currency-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:1.4vh 4vw;
+    transition:border-color .2s;
+  }
+  .currency-card.mini{ padding:1vh 2vw; border-radius:12px; }
+  .currency-card.focused{ border-color:var(--gold-soft); }
+
+  .cc-top{ display:flex; align-items:center; gap:2.5vw; margin-bottom:0.7vh; }
+  .cc-top .flag{ font-size:clamp(15px, 4.2vw, 19px); }
+  .cc-top .code{
+    font-family:'Space Mono', monospace;
+    font-size:clamp(9.5px, 2.6vw, 11px); color:var(--gold-soft); letter-spacing:0.5px;
+  }
+  .cc-top .name{ font-size:clamp(11px, 3vw, 13px); font-weight:700; color:var(--paper); }
+
+  .currency-card.mini .cc-top{ gap:1.4vw; margin-bottom:0.5vh; }
+  .currency-card.mini .cc-top .flag{ font-size:clamp(12px, 3.4vw, 15px); }
+  .currency-card.mini .cc-top .code{ font-size:clamp(8px, 2.2vw, 9.5px); }
+  .currency-card.mini .cc-top .name{ display:none; }
+
+  .cc-input-row{
+    display:flex; align-items:baseline; gap:2vw;
+    border-bottom:2px solid var(--gold);
+    padding-bottom:0.7vh;
+  }
+  .cc-input-row input{
+    pointer-events:none;
+    flex:1;
+    background:transparent; border:none; outline:none;
+    color:var(--paper);
+    font-family:'Space Mono', monospace;
+    font-size:clamp(17px, 5.6vw, 24px); font-weight:700;
+    direction:ltr; text-align:right;
+    width:100%;
+    min-width:0;
+  }
+  .cc-input-row .sym{ font-size:clamp(11px, 3vw, 13.5px); color:var(--gold); font-weight:700; pointer-events:none; }
+
+  .currency-card.mini .cc-input-row input{ font-size:clamp(13px, 4vw, 16.5px); }
+  .currency-card.mini .cc-input-row .sym{ font-size:clamp(9px, 2.5vw, 10.5px); }
+
+  .save-note{
+    text-align:center; font-size:clamp(9px, 2.4vw, 10.5px); color:var(--gold-soft);
+    height:12px; margin-top:0.5vh;
+  }
+  .footnote{
+    text-align:center; font-size:clamp(9px, 2.4vw, 10.5px); color:var(--ink-dim);
+    margin-top:0.6vh; line-height:1.4;
+  }
+
+  .keypad-dock{
+    flex:0 0 auto;
+    background:var(--card);
+    border-top:1px solid var(--line);
+    box-shadow:0 -10px 30px rgba(0,0,0,0.4);
+    padding:1vh 4vw calc(1vh + env(safe-area-inset-bottom));
+  }
+  .keypad-inner{ max-width:560px; margin:0 auto; }
+  .keypad-active{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.5vh 8px 0.8vh;
+    border-bottom:1px solid var(--line);
+    margin-bottom:0.8vh;
+  }
+  .keypad-active .ka-left{ display:flex; align-items:center; gap:8px; }
+  .keypad-active .ka-flag{ font-size:16px; }
+  .keypad-active .ka-label{ font-size:11px; color:var(--gold-soft); }
+  .keypad-active .ka-value{
+    font-family:'Space Mono', monospace; font-size:16px; font-weight:700;
+    color:var(--paper); direction:ltr;
+  }
+  .keypad-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1.1vh 8px;
+  }
+  .keypad-grid button{
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:11px;
+    color:var(--paper);
+    font-family:'Space Mono', monospace;
+    font-size:clamp(15px, 4.4vw, 19px);
+    font-weight:700;
+    padding:1.5vh 0;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .1s, transform .1s;
+  }
+  .keypad-grid button:active{
+    background:var(--gold);
+    color:var(--bg);
+    border-color:var(--gold);
+    transform:scale(0.96);
+  }
+  .keypad-grid button.del{ color:var(--gold); font-size:clamp(13px, 3.8vw, 16px); }
+</style>
+</head>
+<body>
+
+<div class="app-content">
+<div class="sheet">
+
+  <div class="masthead">
+    <div class="brand">Siki Change</div>
+    <div class="brand-rule"></div>
+    <div class="kicker">DZD · PARALLEL MARKET</div>
+    <h1>محوّل السوق الموازية</h1>
+  </div>
+
+  <div class="rate-panel">
+    <div class="rp-title">سعر الصرف اليوم في السوق الموازية</div>
+    <div class="rp-grid">
+      <div class="rp-row" data-key="rateUsd">
+        <div class="rp-head"><span class="flag">🇺🇸</span><span class="code">USD</span></div>
+        <div class="rp-val">
+          <input id="rate-usd" type="text" readonly tabindex="-1" value="250">
+          <span class="dzd">دج</span>
+        </div>
+      </div>
+      <div class="rp-row" data-key="rateTry">
+        <div class="rp-head"><span class="flag">🇹🇷</span><span class="code">TRY</span></div>
+        <div class="rp-val">
+          <input id="rate-try" type="text" readonly tabindex="-1" value="7">
+          <span class="dzd">دج</span>
+        </div>
+      </div>
+      <div class="rp-row" data-key="rateInr">
+        <div class="rp-head"><span class="flag">🇮🇳</span><span class="code">INR</span></div>
+        <div class="rp-val">
+          <input id="rate-inr" type="text" readonly tabindex="-1" value="2.9">
+          <span class="dzd">دج</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="currency-card full" data-code="dzd">
+      <div class="cc-top"><span class="flag">🇩🇿</span><span class="code">DZD</span><span class="name">الدينار الجزائري</span></div>
+      <div class="cc-input-row">
+        <input id="in-dzd" type="text" readonly tabindex="-1" value="2000">
+        <span class="sym">دج</span>
+      </div>
+    </div>
+
+    <div class="mini-row">
+      <div class="currency-card mini" data-code="usd">
+        <div class="cc-top"><span class="flag">🇺🇸</span><span class="code">USD</span><span class="name">دولار</span></div>
+        <div class="cc-input-row">
+          <input id="in-usd" type="text" readonly tabindex="-1" value="8">
+          <span class="sym">$</span>
+        </div>
+      </div>
+
+      <div class="currency-card mini" data-code="try">
+        <div class="cc-top"><span class="flag">🇹🇷</span><span class="code">TRY</span><span class="name">ليرة تركية</span></div>
+        <div class="cc-input-row">
+          <input id="in-try" type="text" readonly tabindex="-1" value="285.7">
+          <span class="sym">₺</span>
+        </div>
+      </div>
+
+      <div class="currency-card mini" data-code="inr">
+        <div class="cc-top"><span class="flag">🇮🇳</span><span class="code">INR</span><span class="name">روبية هندية</span></div>
+        <div class="cc-input-row">
+          <input id="in-inr" type="text" readonly tabindex="-1" value="689.66">
+          <span class="sym">₹</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-note" id="save-note"></div>
+  <div class="footnote">اضغط على أي عملة، واستعمل لوحة الأرقام تحت للكتابة</div>
+
+</div>
+</div>
+
+<div class="keypad-dock">
+  <div class="keypad-inner">
+    <div class="keypad-active">
+      <div class="ka-left">
+        <span class="ka-flag" id="ka-flag">🇩🇿</span>
+        <span class="ka-label" id="ka-label">الدينار الجزائري</span>
+      </div>
+      <div class="ka-value" id="ka-value">2000</div>
+    </div>
+    <div class="keypad-grid">
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button data-key=".">.</button>
+      <button data-key="0">0</button>
+      <button class="del" data-key="del">⌫</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const dzd = document.getElementById('in-dzd');
+  const usd = document.getElementById('in-usd');
+  const try_ = document.getElementById('in-try');
+  const inr = document.getElementById('in-inr');
+  const rUsd = document.getElementById('rate-usd');
+  const rTry = document.getElementById('rate-try');
+  const rInr = document.getElementById('rate-inr');
+  const saveNote = document.getElementById('save-note');
+  const kaFlag = document.getElementById('ka-flag');
+  const kaLabel = document.getElementById('ka-label');
+  const kaValue = document.getElementById('ka-value');
+
+  const fieldMeta = {
+    dzd:     { el: dzd,  kind:'amount', code:'dzd', label:'الدينار الجزائري',    flag:'🇩🇿', sym:'دج' },
+    usd:     { el: usd,  kind:'amount', code:'usd', label:'الدولار الأمريكي',     flag:'🇺🇸', sym:'$'  },
+    try:     { el: try_, kind:'amount', code:'try', label:'الليرة التركية',      flag:'🇹🇷', sym:'₺'  },
+    inr:     { el: inr,  kind:'amount', code:'inr', label:'الروبية الهندية',     flag:'🇮🇳', sym:'₹'  },
+    rateUsd: { el: rUsd, kind:'rate',   code:'usd', label:'سعر الدولار الأمريكي', flag:'🇺🇸', sym:'دج' },
+    rateTry: { el: rTry, kind:'rate',   code:'try', label:'سعر الليرة التركية',   flag:'🇹🇷', sym:'دج' },
+    rateInr: { el: rInr, kind:'rate',   code:'inr', label:'سعر الروبية الهندية',  flag:'🇮🇳', sym:'دج' }
+  };
+
+  let activeKey = 'dzd';
+
+  function rates(){
+    return {
+      usd: parseFloat(rUsd.value) || 0,
+      try: parseFloat(rTry.value) || 0,
+      inr: parseFloat(rInr.value) || 0
+    };
+  }
+
+  function fmt(n){
+    if(!isFinite(n)) return '';
+    return Number(n.toFixed(2)).toString();
+  }
+
+  function applyFromDzd(base, skip){
+    const r = rates();
+    if(skip !== 'dzd') dzd.value = fmt(base);
+    if(skip !== 'usd' && r.usd > 0) usd.value = fmt(base / r.usd);
+    if(skip !== 'try' && r.try > 0) try_.value = fmt(base / r.try);
+    if(skip !== 'inr' && r.inr > 0) inr.value = fmt(base / r.inr);
+  }
+
+  function onAmountInput(code){
+    const r = rates();
+    let base;
+    if(code === 'dzd'){
+      base = parseFloat(dzd.value) || 0;
+    } else if(code === 'usd'){
+      base = (parseFloat(usd.value) || 0) * r.usd;
+    } else if(code === 'try'){
+      base = (parseFloat(try_.value) || 0) * r.try;
+    } else {
+      base = (parseFloat(inr.value) || 0) * r.inr;
+    }
+    applyFromDzd(base, code);
+  }
+
+  let saveTimer;
+  async function persist(){
+    try{
+      await window.storage.set('dzd-rates', JSON.stringify({
+        usd: rUsd.value, try: rTry.value, inr: rInr.value
+      }), false);
+      saveNote.textContent = 'تم الحفظ ✓';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(()=> saveNote.textContent = '', 1200);
+    }catch(e){ /* storage optional */ }
+  }
+
+  function updateActiveDisplay(){
+    const meta = fieldMeta[activeKey];
+    kaFlag.textContent = meta.flag;
+    kaLabel.textContent = meta.label;
+    kaValue.textContent = (meta.el.value || '0') + ' ' + meta.sym;
+  }
+
+  function setActiveKey(key){
+    activeKey = key;
+    const meta = fieldMeta[key];
+
+    document.querySelectorAll('.currency-card').forEach(c=> c.classList.remove('focused'));
+    document.querySelectorAll('.rp-row').forEach(r=> r.classList.remove('active'));
+
+    if(meta.kind === 'amount'){
+      meta.el.closest('.currency-card').classList.add('focused');
+    } else {
+      meta.el.closest('.rp-row').classList.add('active');
+    }
+    updateActiveDisplay();
+  }
+
+  function handleFieldChange(){
+    const meta = fieldMeta[activeKey];
+    if(meta.kind === 'amount'){
+      onAmountInput(meta.code);
+    } else {
+      onAmountInput('dzd');
+      persist();
+    }
+    updateActiveDisplay();
+  }
+
+  function insertChar(ch){
+    const meta = fieldMeta[activeKey];
+    const el = meta.el;
+    if(ch === '.' && el.value.includes('.')) return;
+    el.value = el.value + ch;
+    handleFieldChange();
+  }
+
+  function backspaceChar(){
+    const meta = fieldMeta[activeKey];
+    const el = meta.el;
+    el.value = el.value.slice(0, -1);
+    handleFieldChange();
+  }
+
+  Object.entries(fieldMeta).forEach(([key, meta])=>{
+    const target = meta.kind === 'amount' ? meta.el.closest('.currency-card') : meta.el.closest('.rp-row');
+    target.addEventListener('click', ()=> setActiveKey(key));
+  });
+
+  document.querySelector('.keypad-grid').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const k = btn.dataset.key;
+    if(k === 'del') backspaceChar();
+    else insertChar(k);
+  });
+
+  async function restore(){
+    try{
+      const res = await window.storage.get('dzd-rates', false);
+      if(res && res.value){
+        const r = JSON.parse(res.value);
+        if(r.usd) rUsd.value = r.usd;
+        if(r.try) rTry.value = r.try;
+        if(r.inr) rInr.value = r.inr;
+      }
+    }catch(e){ /* no saved rates yet */ }
+    onAmountInput('dzd');
+    setActiveKey('dzd');
+  }
+
+  restore();
+})();
+</script>
+</body>
+</html>
